@@ -7,7 +7,7 @@ import com.compass.model.Shelter;
 public class ShelterDAOImpl extends GenericDAOImpl<Shelter, Long> implements ShelterDAO {
 
 	public ShelterDAOImpl(EntityManager em) {
-		super(em);
+		super(em, Shelter.class);
 	}
 
 }

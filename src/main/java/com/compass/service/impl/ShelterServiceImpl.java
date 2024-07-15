@@ -8,7 +8,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.EntityTransaction;
 import com.compass.DAO.ShelterDAO;
 import com.compass.DAO.impl.ShelterDAOImpl;
-import com.compass.Exception.CommitException;
 import com.compass.model.Shelter;
 import com.compass.service.ShelterService;
 import com.compass.util.EntityManagerFactorySingleton;
@@ -28,11 +27,8 @@ public class ShelterServiceImpl implements ShelterService {
 		try {
 			Shelter shelter = createShelter();
 			shelterDAO.create(shelter);
-			shelterDAO.commit();
 			System.out.println("\n=== Abrigo cadastrado com sucesso! ===");
 			System.out.println(shelter);
-		} catch (CommitException e) {
-			System.err.println("Erro: " + e.getMessage());
 		} catch (Exception e) {
 			System.err.println("Erro inesperado ao cadastrar o abrigo: " + e.getMessage());
 		}
@@ -44,11 +40,8 @@ public class ShelterServiceImpl implements ShelterService {
 		try {
 			Shelter shelter = createShelterFromInput();
 			shelterDAO.update(shelter);
-			shelterDAO.commit();
 			System.out.println("\n=== Abrigo atualizado com sucesso! ===");
 			System.out.println(shelter);
-		} catch (CommitException e) {
-			System.err.println("Erro ao atualizar o abrigo: " + e.getMessage());
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
 		} catch (Exception e) {
@@ -67,10 +60,7 @@ public class ShelterServiceImpl implements ShelterService {
 				throw new EntityNotFoundException("Abrigo não encontrado.");
 			}
 			shelterDAO.remove(id);
-			shelterDAO.commit();
 			System.out.println("\n=== Abrigo deletado com sucesso! ===");
-		} catch (CommitException e) {
-			System.err.println("Erro ao deletar o abrigo: " + e.getMessage());
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
 		} catch (Exception e) {

@@ -7,7 +7,7 @@ import com.compass.model.DistributionCenter;
 public class DistributionCenterDAOImpl extends GenericDAOImpl<DistributionCenter, Long> implements DistributionCenterDAO {
 
 	public DistributionCenterDAOImpl(EntityManager em) {
-		super(em);
+		super(em, DistributionCenter.class);
 	}
 
 }

@@ -19,7 +19,6 @@ import com.compass.DAO.LotDAO;
 import com.compass.DAO.impl.DistributionCenterDAOImpl;
 import com.compass.DAO.impl.DonationDAOImpl;
 import com.compass.DAO.impl.LotDAOImpl;
-import com.compass.Exception.CommitException;
 import com.compass.Exception.LimitReachedException;
 import com.compass.model.DistributionCenter;
 import com.compass.model.Donation;
@@ -59,19 +58,15 @@ public class DonationServiceImpl implements DonationService {
 	        }
 			
 			lotDAO.create(lot);
-			lotDAO.commit();
 			
 			Donation donation = new Donation(null, center, lot);
 
 			donationDAO.create(donation);
-			donationDAO.commit();
 			System.out.println("\n=== Doação registrada com sucesso! ===");
 			System.out.println(donation);
 		} catch (EntityNotFoundException e) {
 			System.err.println("Erro: Centro de distribuição não encontrado.");
-		} catch (CommitException e) {
-			System.err.println("Erro: " + e.getMessage());
-		}
+		} 
 
 	}
 
@@ -105,10 +100,6 @@ public class DonationServiceImpl implements DonationService {
 
 			lotDAO.update(existingLot);
 
-			lotDAO.commit();
-		} catch (CommitException e) {
-			System.err.println("Erro: " + e.getMessage());
-
 		} catch (EntityNotFoundException | IllegalStateException e) {
 			System.err.println("Erro ao atualizar a doação: " + e.getMessage());
 		} catch (Exception e) {
@@ -129,11 +120,8 @@ public class DonationServiceImpl implements DonationService {
 			}
 
 			donationDAO.remove(id);
-			donationDAO.commit();
 			System.out.println("\n=== Doação deletada com sucesso! ===");
 
-		} catch (CommitException e) {
-			System.err.println("Erro: " + e.getMessage());
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
 		} catch (Exception e) {
@@ -235,10 +223,7 @@ public class DonationServiceImpl implements DonationService {
 	        donation.setDistributionCenter(destinationCenter);
 
 			donationDAO.update(donation);
-			donationDAO.commit();
 			System.out.println("\n=== Doação transferida com sucesso! ===");
-		} catch (CommitException e) {
-			System.err.println("Erro: " + e.getMessage());
 		} catch (EntityNotFoundException e) {
 	        System.err.println(e.getMessage());
 	    } catch (InputMismatchException e) {

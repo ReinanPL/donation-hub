@@ -1,79 +1,87 @@
 package com.compass.DAO.impl;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.EntityTransaction;
 import com.compass.DAO.GenericDAO;
-import com.compass.Exception.CommitException;
 import com.compass.Exception.NoDataException;
 
-public class GenericDAOImpl<T,K> implements GenericDAO<T, K> {
+public class GenericDAOImpl<T, K> implements GenericDAO<T, K> {
 
 	private EntityManager em;
-	
-	private Class<T> clazz;
-	
-	@SuppressWarnings("all")
-	public GenericDAOImpl(EntityManager em) {
+
+	private Class<T> entityClass;
+
+	public GenericDAOImpl(EntityManager em, Class<T> entityClass) {
 		super();
 		this.em = em;
-		clazz = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+		this.entityClass = entityClass;
 	}
-	
-	
+
 	@Override
 	public void create(T entity) {
-		em.persist(entity);
-		
+		EntityTransaction transaction = em.getTransaction();
+		try {
+			transaction.begin(); 
+			em.persist(entity);
+			transaction.commit(); 
+		} catch (Exception e) {
+			if (transaction != null && transaction.isActive()) {
+				transaction.rollback(); // Desfaz a transação em caso de erro
+			}
+			throw new RuntimeException("Erro ao criar a entidade: " + e.getMessage(), e); 
+		}
+
 	}
 
 	@Override
 	public void update(T entity) {
-		em.merge(entity);
-		
+		EntityTransaction transaction = em.getTransaction();
+		try {
+			transaction.begin();
+			em.merge(entity);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null && transaction.isActive()) {
+				transaction.rollback();
+			}
+			throw new RuntimeException("Erro ao atualizar a entidade: " + e.getMessage(), e);
+		}
 	}
 
 	@Override
 	public T find(K id) {
-		return em.find(clazz, id);
-		
+		return em.find(entityClass, id);
+
 	}
-	
+
 	@Override
 	public List<T> findAll() {
-	    CriteriaQuery<T> criteriaQuery = em.getCriteriaBuilder().createQuery(clazz);
-	    criteriaQuery.from(clazz);
-	    return em.createQuery(criteriaQuery).getResultList();
+		return em.createQuery("SELECT e FROM " + entityClass.getSimpleName() + " e", entityClass).getResultList();
 	}
 
 	@Override
-	public void remove(K id) throws NoDataException {
-		T entidade = find(id);
-		if (entidade == null)
-			throw new NoDataException();
-		em.remove(entidade);
-		
-	}
-	
-	
+	public void remove(K id) {
+		EntityTransaction transaction = em.getTransaction();
 
-	@Override
-	public void commit() throws CommitException {
 		try {
-			em.getTransaction().begin();
-			em.getTransaction().commit();
-			}catch (Exception e) {
-				em.getTransaction().rollback();
-				e.printStackTrace();
-				throw new CommitException();
+			transaction.begin();
+			T entity = find(id);
+			if (entity == null) {
+				throw new NoDataException("Entidade não encontrada com o ID: " + id);
 			}
-		
+			em.remove(entity);
+			transaction.commit();
+		} catch (NoDataException e) {
+			System.err.println(e.getMessage());
+		} catch (Exception e) {
+			if (transaction != null && transaction.isActive()) {
+				transaction.rollback();
+			}
+			throw new RuntimeException("Erro ao remover a entidade: " + e.getMessage(), e);
+		}
+
 	}
-
-
-	
-	
 
 }

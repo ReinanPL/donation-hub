@@ -7,7 +7,7 @@ import com.compass.model.Donation;
 public class DonationDAOImpl extends GenericDAOImpl<Donation, Long> implements DonationDAO {
 
 	public DonationDAOImpl(EntityManager em) {
-		super(em);
+		super(em, Donation.class);
 	}
 
 }

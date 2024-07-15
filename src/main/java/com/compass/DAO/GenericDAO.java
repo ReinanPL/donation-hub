@@ -2,7 +2,6 @@ package com.compass.DAO;
 
 import java.util.List;
 
-import com.compass.Exception.CommitException;
 import com.compass.Exception.NoDataException;
 
 public interface GenericDAO<T,K> {
@@ -17,5 +16,4 @@ public interface GenericDAO<T,K> {
 	
 	void remove(K id) throws NoDataException;
 	
-	void commit() throws CommitException;
 }

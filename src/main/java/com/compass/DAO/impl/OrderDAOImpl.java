@@ -7,7 +7,7 @@ import com.compass.model.Order;
 public class OrderDAOImpl extends GenericDAOImpl<Order, Long> implements OrderDAO {
 
 	public OrderDAOImpl(EntityManager em) {
-		super(em);
+		super(em, Order.class);
 	}
 
 }

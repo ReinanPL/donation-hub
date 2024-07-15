@@ -5,6 +5,7 @@ import java.util.Scanner;
 import com.compass.service.impl.DonationServiceImpl;
 import com.compass.service.impl.OrderServiceImpl;
 import com.compass.service.impl.ShelterServiceImpl;
+import com.compass.util.CsvUtil;
 
 public class ApplicationView {
 
@@ -15,6 +16,8 @@ public class ApplicationView {
 	DonationServiceImpl donation = new DonationServiceImpl();
 
 	OrderServiceImpl order = new OrderServiceImpl();
+
+	CsvUtil csv = new CsvUtil();
 
 	public void initPrincipal() {
 		while (true) {
@@ -44,7 +47,7 @@ public class ApplicationView {
 				initTranfer();
 				break;
 			case 4:
-				
+				initOrder();
 				break;
 			case 0:
 				System.out.println("Encerrando o sistema...");
@@ -62,7 +65,6 @@ public class ApplicationView {
 
 	private void initDonation() {
 		while (true) {
-			clearScreen();
 			System.out.println("=================================");
 			System.out.println("||        Menu de Doação        ||");
 			System.out.println("=================================");
@@ -72,6 +74,7 @@ public class ApplicationView {
 			System.out.println("|| 4 - Listar Doações           ||");
 			System.out.println("|| 5 - Buscar Doação por ID     ||");
 			System.out.println("|| 6 - Importar CSV             ||");
+			System.out.println("|| 7 - Limpar Tela              ||");
 			System.out.println("|| 0 - Voltar ao Menu Principal ||");
 			System.out.println("=================================");
 			System.out.print("Escolha uma opção: ");
@@ -96,6 +99,10 @@ public class ApplicationView {
 				donation.getDonationById();
 				break;
 			case 6:
+				csv.importCsv();
+				break;
+			case 7:
+				clearScreen();
 				break;
 			case 0:
                 return;
@@ -118,6 +125,7 @@ public class ApplicationView {
 			System.out.println("|| 3 - Deletar Abrigo          ||");
 			System.out.println("|| 4 - Listar Abrigos          ||");
 			System.out.println("|| 5 - Buscar Abrigo por ID    ||");
+			System.out.println("|| 6 - Limpar Tela             ||");
 			System.out.println("|| 0 - Voltar ao Menu Principal||");
 			System.out.println("=================================");
 			System.out.print("Escolha uma opção: ");
@@ -140,6 +148,9 @@ public class ApplicationView {
 			case 5:
 				shelter.getShelterById();
 				break;
+			case 6:
+				clearScreen();
+				break;
 			case 0:
                 return;
 			default:
@@ -148,7 +159,7 @@ public class ApplicationView {
 		}
 	}
 
-/* 	private void initOrder() {
+ 	private void initOrder() {
 		while (true) {
 			System.out.println("=================================");
 			System.out.println("||       Menu de Pedidos       ||");
@@ -157,6 +168,7 @@ public class ApplicationView {
 			System.out.println("|| 2 - Buscar por ID Abrigo    ||");
 			System.out.println("|| 3 - Aceitar Pedido          ||");
 			System.out.println("|| 4 - Recusar Pedido          ||");
+			System.out.println("|| 5 - Limpar Tela             ||");
 			System.out.println("|| 0 - Voltar ao Menu Principal||");
 			System.out.println("=================================");
 			System.out.print("Escolha uma opção: ");
@@ -176,6 +188,9 @@ public class ApplicationView {
 			case 4:
 				order.rejectOrder();
 				break;
+			case 5:
+				clearScreen();
+				break;
 			case 0:
                 return;
 			default:
@@ -183,7 +198,7 @@ public class ApplicationView {
 			}
 
 		}
-	} */
+	} 
 
 	private void initTranfer() {
 		clearScreen();
