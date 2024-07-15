@@ -23,13 +23,6 @@ Crie um banco de dados MySQL (ou outro de sua escolha).
 Configure as informações de conexão com o banco de dados no arquivo persistence.xml.
 
 3. Compilar e Executar:
-- Usando Maven:
-
-```bash
-cd donation-hub
-mvn compile
-mvn exec:java -Dexec.mainClass="project.application.Program"
-```
 - Usando uma IDE (ex: Eclipse, IntelliJ):
 
 Importe o projeto como um projeto Maven.
