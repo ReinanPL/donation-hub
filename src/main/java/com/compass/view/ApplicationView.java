@@ -21,7 +21,6 @@ public class ApplicationView {
 
 	public void initPrincipal() {
 		while (true) {
-			clearScreen();
 			System.out.println("=================================");
 			System.out.println("||        Donation-HUB        ||");
 			System.out.println("=================================");
@@ -201,7 +200,6 @@ public class ApplicationView {
 	} 
 
 	private void initTranfer() {
-		clearScreen();
 		donation.transferLot();
 	}
 

@@ -105,6 +105,7 @@ public class OrderServiceImpl implements OrderService {
 			order.setStatus(OrderStatus.DENIED);
 			order.setRefusalMotive(motivo);
 			orderDAO.update(order);
+			System.out.print("\n=== Pedido recusado com sucesso! ===");
 
 		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());

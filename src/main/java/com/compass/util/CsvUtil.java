@@ -29,7 +29,6 @@ public class CsvUtil {
 
 	private DonationDAO donationDAO = new DonationDAOImpl(em);
 
-
 	private DistributionCenterDAO centerDAO = new DistributionCenterDAOImpl(em);
 
     public void importCsv(){

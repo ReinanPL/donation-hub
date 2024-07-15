@@ -87,44 +87,49 @@ public class ShelterServiceImpl implements ShelterService {
 	@Override
 	public void getShelterById() {
 		try {
-	        System.out.print("\nDigite o ID do abrigo: ");
-	        Long id = sc.nextLong();
-	        sc.nextLine(); 
+			System.out.print("\nDigite o ID do abrigo: ");
+			Long id = sc.nextLong();
+			sc.nextLine();
 
-	        Shelter shelter = shelterDAO.find(id);
-	        if (shelter != null) {
-	            System.out.println("\n=== Detalhes do Abrigo ===");
-	            System.out.println(shelter);
-	        } else {
-	            throw new EntityNotFoundException("Abrigo não encontrado.");
-	        }
-	    } catch (EntityNotFoundException e) {
-	        System.err.println(e.getMessage());
-	    } catch (Exception e) {
-	        System.err.println("Erro ao buscar o abrigo: " + e.getMessage());
-	    }
+			Shelter shelter = shelterDAO.find(id);
+			if (shelter != null) {
+				System.out.println("\n=== Detalhes do Abrigo ===");
+				System.out.println(shelter);
+			} else {
+				throw new EntityNotFoundException("Abrigo não encontrado.");
+			}
+		} catch (EntityNotFoundException e) {
+			System.err.println(e.getMessage());
+		} catch (Exception e) {
+			System.err.println("Erro ao buscar o abrigo: " + e.getMessage());
+		}
 	}
 
 	public Shelter createShelter() {
 		System.out.println("\n=== Registro de Abrigo ===");
 		System.out.print("Nome do abrigo: ");
 		String name = sc.nextLine();
+		validateShelterName(name);
 
 		System.out.print("Endereço: ");
-		String adress = sc.nextLine();
+		String address = sc.nextLine();
+		validateShelterAddress(address);
 
 		System.out.print("Responsavel: ");
 		String responsible = sc.nextLine();
+		validateShelterResponsible(responsible);
 
 		System.out.print("Email: ");
 		String mail = sc.nextLine();
+		validateShelterEmail(mail);
 
 		System.out.print("Telefone: ");
 		String phone = sc.nextLine();
 
+
 		Shelter shelter = new Shelter();
 		shelter.setName(name);
-		shelter.setAddress(adress);
+		shelter.setAddress(address);
 		shelter.setResponsible(responsible);
 		shelter.setEmail(mail);
 		shelter.setPhoneNumber(phone);
@@ -135,41 +140,72 @@ public class ShelterServiceImpl implements ShelterService {
 
 	public Shelter createShelterFromInput() {
 		System.out.print("\nDigite o ID do abrigo a ser atualizado: ");
-	    Long id = sc.nextLong();
-	    sc.nextLine();
+		Long id = sc.nextLong();
+		sc.nextLine();
 
 		Shelter shelter = shelterDAO.find(id);
-		
+
 		if (shelter == null) {
-	        System.err.println("Abrigo não encontrado.");
-	        return null; 
-	    }
+			System.err.println("Abrigo não encontrado.");
+			return null;
+		}
 
 		System.out.println("\n=== Atualizar Abrigo ===");
 
 		System.out.print("Novo nome: ");
 		String name = sc.nextLine();
+		validateShelterName(name);
 
 		System.out.print("Novo endereço: ");
-		String adress = sc.nextLine();
+		String address = sc.nextLine();
+		validateShelterAddress(address);
 
 		System.out.print("Novo responsavel: ");
 		String responsible = sc.nextLine();
+		validateShelterResponsible(responsible);
 
 		System.out.print("Novo email: ");
 		String mail = sc.nextLine();
+		validateShelterEmail(mail);
 
 		System.out.print("Novo telefone: ");
 		String phone = sc.nextLine();
 
 		shelter.setName(name);
-		shelter.setAddress(adress);
+		shelter.setAddress(address);
 		shelter.setResponsible(responsible);
 		shelter.setEmail(mail);
 		shelter.setPhoneNumber(phone);
 
 		return shelter;
 
+	}
+
+	private void validateShelterName(String name) {
+		if (name.isBlank() || name.length() > 100) {
+			throw new IllegalArgumentException(
+					name + " - Nome inválido. O nome deve ter entre 1 e 100 caracteres e não deve ser Branco.");
+		}
+	}
+
+	private void validateShelterAddress(String address) {
+		if (address.isBlank() || address.length() > 200) {
+			throw new IllegalArgumentException(address
+					+ " - Endereço inválido. O endereço deve ter entre 1 e 200 caracteres e não deve ser Branco.");
+		}
+	}
+
+	private void validateShelterResponsible(String responsible) {
+		if (responsible.isBlank() || responsible.length() > 100) {
+			throw new IllegalArgumentException(responsible
+					+ " - Nome do responsável inválido. O nome deve ter entre 1 e 100 caracteres e não deve ser Branco.");
+		}
+	}
+
+	private void validateShelterEmail(String mail) {
+		if (!mail.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+			throw new IllegalArgumentException(mail + " - Email inválido.");
+		}
 	}
 
 }

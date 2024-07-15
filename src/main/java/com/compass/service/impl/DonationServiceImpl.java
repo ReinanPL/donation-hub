@@ -73,6 +73,7 @@ public class DonationServiceImpl implements DonationService {
 	@Override
 	public void updateDonation() { 
 		try {
+			getAllDonations();
 			System.out.print("\nDigite o ID da doação a ser atualizada: ");
 			Long donationId = sc.nextLong();
 			sc.nextLine();
@@ -110,6 +111,7 @@ public class DonationServiceImpl implements DonationService {
 	@Override
 	public void deleteDonation() {
 		try {
+			getAllDonations();
 			System.out.print("\nDigite o ID da doação a ser deletada: ");
 			Long id = sc.nextLong();
 			sc.nextLine();
