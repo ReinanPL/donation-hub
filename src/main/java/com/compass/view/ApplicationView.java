@@ -38,7 +38,7 @@ public class ApplicationView {
 				initDonation();
 				break;
 			case 2:
-				
+				initShelter();
 				break;
 			case 3:
 				initTranfer();
@@ -107,10 +107,9 @@ public class ApplicationView {
 
 	}
 
-	/*private void initShelter() {
+	private void initShelter() {
 
 		while (true) {
-			clearScreen();
 			System.out.println("=================================");
 			System.out.println("||       Menu de Abrigo        ||");
 			System.out.println("=================================");
@@ -149,9 +148,8 @@ public class ApplicationView {
 		}
 	}
 
-	private void initOrder() {
+/* 	private void initOrder() {
 		while (true) {
-			clearScreen();
 			System.out.println("=================================");
 			System.out.println("||       Menu de Pedidos       ||");
 			System.out.println("=================================");
