@@ -16,7 +16,7 @@ public class EntityManagerFactorySingleton {
 	
 	public static EntityManagerFactory getInstance() {
 		if (fabrica == null) 
-			fabrica = Persistence.createEntityManagerFactory("exemplo-jpa");
+			fabrica = Persistence.createEntityManagerFactory("conn");
 			return fabrica;
 	}
 	
