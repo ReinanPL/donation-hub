@@ -19,11 +19,11 @@ git clone https://github.com/ReinanPL/donation-hub.git
 ```
 
 2. Configurar o Banco de Dados:
-Crie um banco de dados MySQL (ou outro de sua escolha).
-Configure as informações de conexão com o banco de dados no arquivo persistence.xml.
+- Crie um banco de dados MySQL (ou outro de sua escolha).
+- Configure as informações de conexão com o banco de dados no arquivo persistence.xml.
+- E na propriedade "hibernate.hbm2ddl.auto" troque o valor de "Update" para "create-drop".
 
-3. Compilar e Executar:
-- Usando uma IDE (ex: Eclipse, IntelliJ):
-
-Importe o projeto como um projeto Maven.
-Execute a classe principal Program.java.
+4. Compilar e Executar:
+- Use uma IDE (ex: Eclipse, IntelliJ):
+- Importe o projeto como um projeto Maven.
+- Execute a classe principal application.Program.java.
