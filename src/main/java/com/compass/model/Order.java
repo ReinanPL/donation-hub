@@ -33,8 +33,8 @@ public class Order implements Serializable {
     private Shelter shelter;
 
     @OneToOne
-    @JoinColumn(name = "donation_id")
-    private Donation donation;
+    @JoinColumn(name = "lot_id")
+    private Lot lot;
     
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
@@ -52,11 +52,10 @@ public class Order implements Serializable {
     	
     }
 
-	public Order(Long id, Shelter shelter, Donation donation, OrderStatus status, String refusalMotive, LocalDate date, DistributionCenter distributionCenter) {
+	public Order(Shelter shelter, Lot lot, OrderStatus status, String refusalMotive, LocalDate date, DistributionCenter distributionCenter) {
 		super();
-		this.id = id;
 		this.shelter = shelter;
-		this.donation = donation;
+		this.lot = lot;
 		this.status = status;
 		this.refusalMotive = refusalMotive;
 		this.date = date;
@@ -79,12 +78,12 @@ public class Order implements Serializable {
 		this.shelter = shelter;
 	}
 
-	public Donation getDonation() {
-		return donation;
+	public Lot getLot() {
+		return lot;
 	}
 
-	public void setDonation(Donation donation) {
-		this.donation = donation;
+	public void setLot(Lot lot) {
+		this.lot = lot;
 	}
 
 	public OrderStatus getStatus() {
@@ -141,15 +140,16 @@ public class Order implements Serializable {
 	public String toString() {
 	    StringBuilder sb = new StringBuilder();
 	    sb.append("Order:\n");
-	    sb.append("  ID:              ").append(id).append("\n");
-	    sb.append("  Abrigo:          ").append(shelter.getId()).append(" - ").append(shelter.getName()).append("\n"); 
-	    sb.append("  Id Doação:          ").append(donation.getId()).append("\n"); 
+	    sb.append("  ID:              ").append(getId()).append("\n");
+	    sb.append("  Abrigo:          ").append(getShelter().getId()).append(" - ").append(getShelter().getName()).append("\n");
+		sb.append("  Data do pedido:  ").append(getDate()).append("\n");
+		sb.append("  Status:          ").append(getStatus()).append("\n");
+	    sb.append(lot.getDonations()).append("\n");
 	    if (refusalMotive != null) { 
-	        sb.append("  Motivo Recusa:   ").append(refusalMotive).append("\n");
+	        sb.append("  Motivo da Recusa: ").append(getRefusalMotive()).append("\n");
 	    }
-	    sb.append("  Data:            ").append(date).append("\n"); 
 
-	    return sb.toString();
+		return sb.toString();
 	}
     
     

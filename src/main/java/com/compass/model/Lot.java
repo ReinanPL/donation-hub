@@ -18,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name="TB_LOT")
@@ -29,14 +30,20 @@ public class Lot implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank(message = "O nome do item é obrigatório.")
+	@Size(max = 100, message = "O nome do item não pode exceder 100 caracteres.")
 	private String name;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "item_type")
 	private ItemType itemType;
 
+	@NotBlank(message = "A descrição do item é obrigatória.")
+	@Size(max = 255, message = "A descrição do item não pode exceder 255 caracteres.")
 	private String description;
 
+	@NotNull(message = "A quantidade é obrigatória.")
+	@Min(value = 1, message = "A quantidade deve ser maior ou igual a 1.")
 	private Integer quantity;
 
 	@Column(name = "measuring_unit")
@@ -52,7 +59,7 @@ public class Lot implements Serializable {
 
 	
 	@OneToOne(mappedBy = "lot")
-	private Donation donations;
+	private Donation donation;
 
 	
 	public Lot() {
@@ -86,7 +93,7 @@ public class Lot implements Serializable {
 		this.genre = genre;
 		this.size = size;
 		this.validity = validity;
-		this.donations = donations;
+		this.donation = donations;
 	}
 	
 
@@ -167,11 +174,26 @@ public class Lot implements Serializable {
 	}
 
 	public Donation getDonations() {
-		return donations;
+		return donation;
 	}
 
 	public void setDonations(Donation donations) {
-		this.donations = donations;
+		this.donation = donations;
+	}
+
+	@AssertTrue(message = "O gênero é obrigatório para roupas.")
+	public boolean isGenreValid() {
+		return itemType != ItemType.CLOTHING || genre != null;
+	}
+
+	@AssertTrue(message = "O tamanho é obrigatório para roupas.")
+	public boolean isSizeValid() {
+		return itemType != ItemType.CLOTHING || size != null;
+	}
+
+	@AssertTrue(message = "A validade é obrigatória para alimentos.")
+	public boolean isValidityValid() {
+		return itemType != ItemType.FOOD || validity != null;
 	}
 
 
@@ -195,9 +217,22 @@ public class Lot implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Lot [id=" + id + ", name=" + name + ", itemType=" + itemType + ", description=" + description
-				+ ", quantity=" + quantity + ", unitOfMeasurement=" + unitOfMeasurement + ", genre=" + genre + ", size="
-				+ size + ", validity=" + validity + ", donations=" + donations + "]";
+		StringBuilder sb = new StringBuilder();
+
+			sb.append("  Lote (ID):        ").append(getId()).append("\n");
+			sb.append("    Nome:          ").append(getName()).append("\n");
+			sb.append("    Tipo:          ").append(getItemType()).append("\n");
+			sb.append("    Quantidade:    ").append(getQuantity()).append("\n");
+
+		if(getItemType() == ItemType.CLOTHING){
+			sb.append("    Genero:        ").append(getGenre()).append("\n");
+			sb.append("    Tamanho:       ").append(getSize()).append("\n");
+		}
+		if(getItemType() == ItemType.FOOD){
+			sb.append("    Validade:      ").append(getValidity()).append("\n");
+		}
+
+		return sb.toString();
 	}
 
 	

@@ -1,18 +1,11 @@
 package com.compass.service.impl;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
-
+import com.compass.util.ValidationUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import com.compass.DAO.DistributionCenterDAO;
 import com.compass.DAO.DonationDAO;
 import com.compass.DAO.LotDAO;
@@ -29,78 +22,57 @@ import com.compass.model.enums.SizeCloth;
 import com.compass.service.DonationService;
 import com.compass.util.EntityManagerFactorySingleton;
 
+
 public class DonationServiceImpl implements DonationService {
 
 	EntityManager em = EntityManagerFactorySingleton.getInitDb();
-
 	private final Scanner sc = new Scanner(System.in);
-
-	private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-	private DonationDAO donationDAO = new DonationDAOImpl(em);
-
-	private LotDAO lotDAO = new LotDAOImpl(em);
-
-	private DistributionCenterDAO centerDAO = new DistributionCenterDAOImpl(em);
+	private final DonationDAO donationDAO = new DonationDAOImpl(em);
+	private final LotDAO lotDAO = new LotDAOImpl(em);
+	private final DistributionCenterDAO centerDAO = new DistributionCenterDAOImpl(em);
+	private final ValidationUtil validationService = new ValidationUtil();
 
 	@Override
 	public void registerDonation() {
 		try {
-			Lot lot = createLot();
-			DistributionCenter center = centerDAO.find(selectCenter());
-			
-			int currentQuantity = getTotalQuantityByType(center, lot.getItemType());
+			var lot = createLot();
+			var center = selectCenter();
 
-	        if (currentQuantity + lot.getQuantity() > 1000) {
-	            throw new LimitReachedException(
-	                "Limite de itens do tipo " + lot.getItemType() + " atingido no centro de distribuição " + center.getName() + "."
-	            );
-	        }
-			
+			var currentQuantity = getTotalQuantityByType(center, lot.getItemType());
+	        verifyStock(currentQuantity, lot, center);
+
 			lotDAO.create(lot);
-			
-			Donation donation = new Donation(null, center, lot);
-
+			var donation = new Donation(null, center, lot);
 			donationDAO.create(donation);
 			System.out.println("\n=== Doação registrada com sucesso! ===");
 			System.out.println(donation);
 		} catch (EntityNotFoundException e) {
 			System.err.println("Erro: Centro de distribuição não encontrado.");
-		} 
+		} catch(LimitReachedException e) {
+			System.err.println(e.getMessage());
+		}catch (Exception e) {
+			System.err.println("Erro inesperado ao cadastrar doação:" + e.getMessage());
+		}
 
 	}
 
 	@Override
-	public void updateDonation() { 
+	public void updateDonation() {
 		try {
 			getAllDonations();
-			System.out.print("\nDigite o ID da doação a ser atualizada: ");
-			Long donationId = sc.nextLong();
-			sc.nextLine();
+			var donationId = Long.parseLong(getInput("\nDigite o ID da doação a ser atualizada: "));
+			var donation = Optional.of(donationDAO.find(donationId)).
+					orElseThrow(() -> new EntityNotFoundException("Doação não encontrada."));
 
-			Donation donation = donationDAO.find(donationId);
-			if (donation == null) {
-				throw new EntityNotFoundException("Doação não encontrada.");
-			}
+			var existingLot = Optional.of(donation.getLot())
+					.orElseThrow(() -> new EntityNotFoundException("A doação não possui um lote associado."));
 
-			Lot existingLot = donation.getLot();
-			if (existingLot == null) {
-				throw new IllegalStateException("A doação não possui um lote associado.");
-			}
-
-			Lot updatedDonation = createLot();
-
-			existingLot.setName(updatedDonation.getName());
-			existingLot.setItemType(updatedDonation.getItemType());
-			existingLot.setDescription(updatedDonation.getDescription());
-			existingLot.setQuantity(updatedDonation.getQuantity());
-			existingLot.setUnitOfMeasurement(updatedDonation.getUnitOfMeasurement());
-			existingLot.setValidity(updatedDonation.getValidity());
-			existingLot.setGenre(updatedDonation.getGenre());
-			existingLot.setSize(updatedDonation.getSize());
-
-			lotDAO.update(existingLot);
-
+			var updatedLot = createLot();
+			updatedLot.setId(existingLot.getId());
+			validationService.validate(updatedLot);
+			lotDAO.update(updatedLot);
+			System.out.println("\n=== Doação alterada com sucesso! ===");
+			System.out.println(donation);
 		} catch (EntityNotFoundException | IllegalStateException e) {
 			System.err.println("Erro ao atualizar a doação: " + e.getMessage());
 		} catch (Exception e) {
@@ -112,18 +84,12 @@ public class DonationServiceImpl implements DonationService {
 	public void deleteDonation() {
 		try {
 			getAllDonations();
-			System.out.print("\nDigite o ID da doação a ser deletada: ");
-			Long id = sc.nextLong();
-			sc.nextLine();
+			var donationId = Long.parseLong(getInput("\nDigite o ID da doação a ser deletada: "));
+            Optional.ofNullable(donationDAO.find(donationId))
+                    .orElseThrow(() -> new EntityNotFoundException("Doação não encontrada."));
 
-			Donation donation = donationDAO.find(id);
-			if (donation == null) {
-				throw new EntityNotFoundException("Doação não encontrada.");
-			}
-
-			donationDAO.remove(id);
+            donationDAO.remove(donationId);
 			System.out.println("\n=== Doação deletada com sucesso! ===");
-
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
 		} catch (Exception e) {
@@ -135,21 +101,12 @@ public class DonationServiceImpl implements DonationService {
 	@Override
 	public void getDonationById() {
 		try {
-			System.out.print("\nDigite o ID da doação a ser buscada: ");
-			Long id = sc.nextLong();
-			sc.nextLine();
-
-			Donation donation = donationDAO.find(id);
-			if (donation != null) {
-				System.out.println("\n=== Detalhes da Doação ===");
-				System.out.println(donation);
-			} else {
-				throw new EntityNotFoundException("Doação não encontrada.");
-			}
+			var donationId = Long.parseLong(getInput("\nDigite o ID da doação a ser buscada: "));
+			var donation = Optional.of(donationDAO.find(donationId))
+					.orElseThrow(() -> new EntityNotFoundException("Id da doação não encontrado."));
+			System.out.println(donation);
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
-		} catch (InputMismatchException e) {
-			System.err.println("ID inválido. Digite um número válido.");
 		} catch (Exception e) {
 			System.err.println("Erro ao buscar a doação: " + e.getMessage());
 		}
@@ -158,227 +115,119 @@ public class DonationServiceImpl implements DonationService {
 	@Override
 	public void getAllDonations() {
 		try {
-			List<Donation> donations = donationDAO.findAll();
-
-			if (donations.isEmpty()) {
-				System.out.println("\n=== Lista de Doações ===");
-				System.out.println("Nenhuma doação cadastrada.");
-			} else {
-				System.out.println("\n=== Lista de Doações ===");
-				donations.forEach(System.out::println);
-			}
+			var donations = Optional.of(donationDAO.findAll())
+					.filter(list -> !list.isEmpty())
+					.orElseThrow(() -> new EntityNotFoundException("Nenhuma doação encontrada."));
+			System.out.println("\n=== Lista de Doações ===");
+			donations.forEach(System.out::println);
 		} catch (Exception e) {
 			System.err.println("Erro ao obter a lista de doações: " + e.getMessage());
 		}
 	}
 
+	@Override
 	public void transferLot() {
 		try {
-			System.out.println("\nDigite o ID do centro de origem da transferência: ");
-			Long id = sc.nextLong();
-			sc.nextLine();
-
-	        DistributionCenter sourceCenter = centerDAO.find(id);
-	        if (sourceCenter == null) {
-	            throw new EntityNotFoundException("Centro de distribuição de origem não encontrado.");
-	        }
-	        
-			CriteriaBuilder cb = em.getCriteriaBuilder();
-			CriteriaQuery<Donation> cq = cb.createQuery(Donation.class);
-			Root<Donation> root = cq.from(Donation.class);
-			cq.select(root).where(cb.equal(root.get("distributionCenter").get("id"), id));
-			List<Donation> donations = em.createQuery(cq).getResultList();
-
-			if (donations.isEmpty()) {
-	            System.out.println("Nenhuma doação encontrada no centro de distribuição com ID " + id + ".");
-	        }
+			System.out.println("Centro de Origem:");
+			var id = selectCenter().getId();
+			var donations = Optional.of(donationDAO.getDonationByIdDistributionCenter(id))
+					.filter(list -> !list.isEmpty())
+					.orElseThrow(() -> new EntityNotFoundException("Nenhuma doação encontrada no centro de distribuição com ID " + id + "."));
 
 	        System.out.println("\nDoações disponíveis no centro de origem:");
 	        donations.forEach(System.out::println);
 
-	        System.out.println("Digite o id da doação para fazer a transferência");
-	        Long idLot = sc.nextLong();
-	        sc.nextLine(); 
+			var idLot = Long.parseLong(getInput("Digite o id da doação para fazer a transferência"));
+			var donation = Optional.of(donationDAO.find(idLot))
+					.orElseThrow(() -> new EntityNotFoundException("Doação não encontrada."));
 
-	        Donation donation = donationDAO.find(idLot);
-	        if (donation == null) {
-	            throw new EntityNotFoundException("Doação não encontrada.");
-	        }
+			System.out.println("Centro de destino:");
+			var destinationCenter = selectCenter();
 
-	        System.out.println("Digite o id do centro de destino para fazer a transferência");
-	        Long idDestino = sc.nextLong();
-	        sc.nextLine(); 
+	        var currentQuantity = getTotalQuantityByType(destinationCenter, donation.getLot().getItemType());
+	        verifyStock(currentQuantity, donation.getLot(), destinationCenter);
 
-	        DistributionCenter destinationCenter = centerDAO.find(idDestino);
-	        if (destinationCenter == null) {
-	            throw new EntityNotFoundException("Centro de distribuição de destino não encontrado.");
-	        }
-	        
-	        int currentQuantity = getTotalQuantityByType(destinationCenter, donation.getLot().getItemType());
-	        if (currentQuantity + donation.getLot().getQuantity() > 1000) {
-	            throw new LimitReachedException(
-	                "Limite de itens do tipo " + donation.getLot().getItemType() + 
-	                " atingido no centro de distribuição " + destinationCenter.getName() + "."
-	            );
-	        }
-	        
 	        donation.setDistributionCenter(destinationCenter);
-
 			donationDAO.update(donation);
 			System.out.println("\n=== Doação transferida com sucesso! ===");
 		} catch (EntityNotFoundException e) {
 	        System.err.println(e.getMessage());
 	    } catch (InputMismatchException e) {
 	        System.err.println("ID inválido. Digite um número válido.");
-	    } 
+	    }
 
 	}
 
-	private static final Map<Integer, GenreCloth> GENRE_CLOTH_MAP = Map.of(1, GenreCloth.M, 2, GenreCloth.F);
+	private Lot createLot() {
+		System.out.println("\n=== Registro de Doação: Lote ===");
+		var name = getInput("Nome do item: ");
+		var description = getInput("Descrição do item: ");
+		var quantity = Integer.parseInt(getInput("Quantidade: "));
 
-	private static final Map<Integer, SizeCloth> SIZE_CLOTH_MAP = Map.of(1, SizeCloth.CHILDREN, 2, SizeCloth.XS, 3,
-			SizeCloth.S, 4, SizeCloth.M, 5, SizeCloth.L, 6, SizeCloth.XL);
+		var itemTypeMap = Map.of(1, ItemType.CLOTHING, 2, ItemType.HYGIENE, 3, ItemType.FOOD);
 
-	private Lot createLot() { //refactor
-		try {
-			System.out.println("\n=== Registro de Doação: Lote ===");
+		var itemType = Optional.of(itemTypeMap.get(Integer.parseInt((getInput("Escolha o tipo de item: \n 1. Roupas \n 2. Produtos de Higiene \n 3. Alimentos \n")))))
+				.orElseThrow(() -> new IllegalArgumentException("Opção inválida."));
 
-			System.out.print("Nome do item: ");
-			String name = sc.nextLine();
+		var lot = new Lot(null, name, itemType, description, quantity, null, null, null, null);
 
-			System.out.print("Descrição do item: ");
-			String description = sc.nextLine();
+		Optional.of(itemType).filter(ItemType.CLOTHING::equals).ifPresent(type -> LotClothing(lot));
+		Optional.of(itemType).filter(ItemType.FOOD::equals).ifPresent(type -> LotFood(lot));
 
-			System.out.print("Quantidade: ");
-			int quantity = sc.nextInt();
-			sc.nextLine();
-
-			String unitOfMeasurement = null;
-			GenreCloth genre = null;
-			SizeCloth size = null;
-			LocalDate validity = null;
-
-			System.out.print("Escolha o tipo de item: ");
-			System.out.println("1. Roupas");
-			System.out.println("2. Produtos de Higiene");
-			System.out.println("3. Alimentos");
-
-			int itemTypeChoice = sc.nextInt();
-			sc.nextLine();
-
-			ItemType itemType = null;
-
-			switch (itemTypeChoice) {
-			case 1:
-				int genreChoice = 0;
-				while (genreChoice != 1 || genreChoice != 2) {
-					itemType = ItemType.CLOTHING;
-					System.out.println("\nGênero da Roupa:");
-					System.out.println("1. Masculino");
-					System.out.println("2. Feminino");
-					System.out.print("Escolha uma opção: ");
-
-					genreChoice = sc.nextInt();
-					sc.nextLine();
-
-					genre = GENRE_CLOTH_MAP.getOrDefault(genreChoice, null);
-					if (genre == null) {
-						System.out.println("Opção inválida!");
-
-					}
-				}
-
-				System.out.println("\nTamanho da Roupa:");
-				System.out.println("1. Infantil");
-				System.out.println("2. PP");
-				System.out.println("3. P");
-				System.out.println("4. M");
-				System.out.println("5. G");
-				System.out.println("6. GG");
-				System.out.print("Escolha uma opção: ");
-
-				int sizeChoice = sc.nextInt();
-				sc.nextLine();
-
-				size = SIZE_CLOTH_MAP.getOrDefault(sizeChoice, null);
-				if (size == null) {
-					System.out.println("Opção inválida!");
-
-				}
-				break;
-
-			case 2:
-				itemType = ItemType.HYGIENE;
-				break;
-			case 3:
-				itemType = ItemType.FOOD;
-				System.out.println("Digite a validade do alimento doado (yyyy-MM-dd): ");
-				String dateStr = sc.nextLine();
-				validity = LocalDate.parse(dateStr, dtf);
-
-				System.out.println("Digite a unidade de medida do item: ");
-				unitOfMeasurement = sc.nextLine();
-
-				break;
-			default:
-				System.out.println("Opção inválida!");
-
-			}
-
-			Lot lot = new Lot();
-			lot.setName(name);
-			lot.setItemType(itemType);
-			lot.setDescription(description);
-			lot.setQuantity(quantity);
-			lot.setGenre(genre);
-			lot.setSize(size);
-			lot.setValidity(validity);
-			lot.setUnitOfMeasurement(unitOfMeasurement);
-
-			return lot;
-		} catch (Exception e) {
-			System.err.println("Erro:" + e.getMessage());
-		}
-		return null;
+		validationService.validate(lot);
+		return lot;
 	}
 
-	public Long selectCenter() {
-		try {
-			List<DistributionCenter> centers = centerDAO.findAll();
-			if (centers.isEmpty()) {
-	            System.out.println("\n=== Selecione o Centro de Distribuição ==="); 
-	            System.out.println("Nenhum centro de distribuição encontrado.");
-	            return null;
-	        }
-					
-					
-			System.out.print("\nDigite o número do centro de distribuição: ");
-			centers.forEach(System.out::println);
-			Long id = sc.nextLong(); 
-			
-			if (id >= 1 && id <= centers.size()) {
-	            return id; 
-	        } else {
-	            System.out.println("Opção inválida.");
-	            return null;
-	        }
-		} catch (Exception e) {
-			System.err.println("Erro:" + e.getMessage());
-			return null;
-		}
+	private void LotClothing(Lot lot){
+		var GENRE_CLOTH_MAP = Map.of(1, GenreCloth.M, 2, GenreCloth.F);
+		var SIZE_CLOTH_MAP = Map.of(1, SizeCloth.CHILDREN, 2, SizeCloth.XS, 3,
+				SizeCloth.S, 4, SizeCloth.M, 5, SizeCloth.L, 6, SizeCloth.XL);
 
+		var genre = GENRE_CLOTH_MAP.get(Integer.parseInt(getInput("Gênero da Roupa: \n1. Masculino \n2. Feminino\n")));
+		var size = SIZE_CLOTH_MAP.get(Integer.parseInt(getInput("Tamanho da Roupa: \n1. Infantil \n2. PP \n3. P \n4. M \n5. G \n6. GG\n")));
+		lot.setGenre(genre);
+		lot.setSize(size);
+	}
+
+	private void LotFood(Lot lot){
+		var validity = LocalDate.parse(getInput("Digite a validade do alimento doado (yyyy-MM-dd): "));
+		var unitOfMeasurement =  getInput("Digite a unidade de medida do item: ");
+		lot.setValidity(validity);
+		lot.setUnitOfMeasurement(unitOfMeasurement);
+	}
+
+	public DistributionCenter selectCenter() {
+		var centers = Optional.of(centerDAO.findAll())
+				.filter(list -> !list.isEmpty())
+				.orElseThrow(() -> new EntityNotFoundException("Não existe nenhum centro de distribuição cadastrado."));
+
+		centers.forEach(System.out::println);
+		var id = Long.parseLong(getInput("\nDigite o ID do centro de distribuição: "));
+		return Optional.of(centerDAO.find(id))
+				.orElseThrow(() -> new EntityNotFoundException("Centro de distribuição não encontrado."));
 	}
 	
 	public int getTotalQuantityByType(DistributionCenter center, ItemType itemType) {
-	    int totalQuantity = 0;
-	    for (Donation donation : center.getDonations()) { 
-	        if (donation.getLot() != null && donation.getLot().getItemType() == itemType) {
-	            totalQuantity += donation.getLot().getQuantity();
-	        }
-	    }
-	    return totalQuantity;
+		return center.getDonations().stream()
+				.filter(d -> d.getLot() != null && d.getLot().getItemType() == itemType)
+				.mapToInt(d -> d.getLot().getQuantity())
+				.sum();
 	}
-	
-	
+
+	private static void verifyStock(int currentQuantity, Lot lot, DistributionCenter destinationCenter) {
+		var totalQuantity = currentQuantity + lot.getQuantity();
+
+		Optional.of(totalQuantity)
+				.filter(quantity -> quantity <= 1000)
+				.orElseThrow(() -> new LimitReachedException(
+						"Limite de itens do tipo " + lot.getItemType() +
+								" atingido no centro de distribuição " + destinationCenter.getName() + "."
+				));
+	}
+
+	private String getInput(String prompt) {
+		System.out.print(prompt);
+		return sc.nextLine();
+	}
 
 }

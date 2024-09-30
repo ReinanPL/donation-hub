@@ -17,7 +17,7 @@ public class EntityManagerFactorySingleton {
 	public static EntityManagerFactory getInstance() {
 		if (fabrica == null) 
 			fabrica = Persistence.createEntityManagerFactory("conn");
-			return fabrica;
+		return fabrica;
 	}
 	
 	public static EntityManager getInitDb() {

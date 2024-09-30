@@ -9,9 +9,9 @@ import com.compass.Exception.NoDataException;
 
 public class GenericDAOImpl<T, K> implements GenericDAO<T, K> {
 
-	private EntityManager em;
+	private final EntityManager em;
 
-	private Class<T> entityClass;
+	private final Class<T> entityClass;
 
 	public GenericDAOImpl(EntityManager em, Class<T> entityClass) {
 		super();

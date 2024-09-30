@@ -8,6 +8,7 @@ public interface DonationService {
 	void deleteDonation();
 	void getDonationById();
 	void getAllDonations();
+	void transferLot();
 
 	
 	

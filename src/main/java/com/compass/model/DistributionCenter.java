@@ -109,7 +109,16 @@ public class DistributionCenter implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Centro de distribuição: id= " + id + ", nome= " + name + ", Endereço=" + address + "\n";
+			StringBuilder sb = new StringBuilder();
+
+			sb.append("Centro de distribuição:\n");
+			sb.append("  ID:         ").append(getId()).append("\n");
+			sb.append("  Nome:       ").append(getName()).append("\n");
+			sb.append("  Endereço:   ").append(getAddress()).append("\n");
+
+
+			return sb.toString();
+		}
 	}
 	
 	
@@ -117,4 +126,4 @@ public class DistributionCenter implements Serializable {
 	
 	
 
-}
+

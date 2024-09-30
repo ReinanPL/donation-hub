@@ -1,0 +1,9 @@
+distribution_center_id,name,item_type,description,genre,size,unit_of_measurement,validity,quantity
+2,Tênis,CLOTHING,Nike,M,M,,,15
+1,Camisa,CLOTHING,Lacoste,F,S,,,50
+2,Cueca,CLOTHING,Calvin Klein,M,L,,,40
+3,Papel higiênico,HYGIENE,Mimmo,,,,,80
+3,Pasta de dente,HYGIENE,Colgate,,,,,79
+2,Arroz,FOOD,Camil,,,1kg,2024-12-31,60
+2,Macarrão,FOOD,Vitarella,,,1kg,2024-12-31,75
+1,Leite,FOOD,Piracanjuba,,,1L,2024-12-31,30

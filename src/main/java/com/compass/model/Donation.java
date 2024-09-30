@@ -3,6 +3,7 @@ package com.compass.model;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.compass.model.enums.ItemType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,9 +31,6 @@ public class Donation implements Serializable {
 	@OneToOne(cascade = CascadeType.PERSIST)
 	@JoinColumn(name = "lot_id")
 	private Lot lot;
-	
-	@OneToOne(mappedBy = "donation")
-	private Order order;
 	
 	@ManyToOne
 	@JoinColumn(name = "shelter_id")
@@ -73,14 +71,6 @@ public class Donation implements Serializable {
 	public void setLot(Lot lot) {
 		this.lot = lot;
 	}
-	
-	public Order getOrder() {
-		return order;
-	}
-
-	public void setOrder(Order order) {
-		this.order = order;
-	}
 
 	public Shelter getShelter() {
 		return shelter;
@@ -112,24 +102,17 @@ public class Donation implements Serializable {
 	public String toString() {
 	    StringBuilder sb = new StringBuilder();
 	    sb.append("Donation:\n");
-	    sb.append("  ID:               ").append(id).append("\n");
+	    sb.append("  ID:               ").append(getId()).append("\n");
 
 	    if (distributionCenter != null) {
-	        sb.append("  Centro Dist.:     ").append(distributionCenter.getId()).append(" - ").append(distributionCenter.getName()).append("\n");
+	        sb.append("  Centro Dist.:     ").append(getDistributionCenter().getId()).append(" - ").append(getDistributionCenter().getName()).append("\n");
 	    }
 
 	    if (shelter != null) {
-	        sb.append("  Abrigo:           ").append(shelter.getId()).append(" - ").append(shelter.getName()).append("\n");
+	        sb.append("  Abrigo:           ").append(getShelter().getId()).append(" - ").append(shelter.getName()).append("\n");
 	    }
 
-	    if (lot != null) {
-	        sb.append("  Lote (ID):        ").append(lot.getId()).append("\n");
-	        sb.append("    Nome:          ").append(lot.getName()).append("\n"); 
-	        sb.append("    Tipo:          ").append(lot.getItemType()).append("\n");
-	        sb.append("    Quantidade:    ").append(lot.getQuantity()).append("\n");
-	        
-	    }
-
+		sb.append(lot);
 	    return sb.toString();
 	}
 

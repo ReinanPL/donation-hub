@@ -27,25 +27,25 @@ public class CsvUtil {
 
 	private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-	private DonationDAO donationDAO = new DonationDAOImpl(em);
+	private final DonationDAO donationDAO = new DonationDAOImpl(em);
 
-	private DistributionCenterDAO centerDAO = new DistributionCenterDAOImpl(em);
+	private final DistributionCenterDAO centerDAO = new DistributionCenterDAOImpl(em);
 
     public void importCsv(){
 
         try (CSVReader csvReader = new CSVReader(new FileReader(
-				"C:\\Users\\Reinan\\Documents\\Projetos\\project\\src\\main\\resources\\META-INF\\donation.csv"))) {
+				"C:\\Users\\Reinan\\Documents\\Projetos\\donation-hub\\src\\main\\resources\\META-INF\\donation.csv"))) {
 			String[] headers = csvReader.readNext();
 			String[] nextRecord;
 
 			while ((nextRecord = csvReader.readNext()) != null) {
-				Donation donation = new Donation();
-				Lot lot = new Lot();
+				var donation = new Donation();
+				var lot = new Lot();
 				Long distributionCenterId = null;
 
 				for (int i = 0; i < headers.length; i++) {
-					String header = headers[i];
-					String value = nextRecord[i];
+					var header = headers[i];
+					var value = nextRecord[i];
 
 					switch (header) {
 					case "distribution_center_id": 
@@ -68,7 +68,7 @@ public class CsvUtil {
 						break;
 					case "validity":
 						if (lot.getItemType() == ItemType.FOOD) {
-							LocalDate expirationDate = LocalDate.parse(value, dtf);
+							var expirationDate = LocalDate.parse(value, dtf);
 							lot.setValidity(expirationDate);
 						}
 						break;
@@ -86,13 +86,13 @@ public class CsvUtil {
 					}
 				}
 
-				DistributionCenter distributionCenter = centerDAO.find(distributionCenterId);
+				var distributionCenter = centerDAO.find(distributionCenterId);
 				donation.setDistributionCenter(distributionCenter);
 				donation.setLot(lot);
 
 				donationDAO.create(donation);
-
 			}
+			System.out.println("\n=== Doações registradas com sucesso! ===\n");
 		} catch (IOException | CsvValidationException e) {
             throw new CsvReaderException("Erro ao ler o arquivo CSV: " + e.getMessage()); 
         }

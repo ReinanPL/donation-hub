@@ -1,31 +1,32 @@
 package com.compass.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
+
+import com.compass.util.ValidationUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.EntityTransaction;
 import com.compass.DAO.ShelterDAO;
 import com.compass.DAO.impl.ShelterDAOImpl;
 import com.compass.model.Shelter;
 import com.compass.service.ShelterService;
 import com.compass.util.EntityManagerFactorySingleton;
 
+import static java.lang.Long.parseLong;
+
 public class ShelterServiceImpl implements ShelterService {
 
 	EntityManager em = EntityManagerFactorySingleton.getInitDb();
-
-	EntityTransaction transaction = em.getTransaction();
-
 	private final Scanner sc = new Scanner(System.in);
-
-	private ShelterDAO shelterDAO = new ShelterDAOImpl(em);
+	private final ShelterDAO shelterDAO = new ShelterDAOImpl(em);
+	private final ValidationUtil validationService = new ValidationUtil();
 
 	@Override
 	public void registerShelter() {
 		try {
-			Shelter shelter = createShelter();
+			var shelter = createShelter();
 			shelterDAO.create(shelter);
 			System.out.println("\n=== Abrigo cadastrado com sucesso! ===");
 			System.out.println(shelter);
@@ -38,7 +39,7 @@ public class ShelterServiceImpl implements ShelterService {
 	@Override
 	public void updateShelter() {
 		try {
-			Shelter shelter = createShelterFromInput();
+			var shelter = createShelterFromInput();
 			shelterDAO.update(shelter);
 			System.out.println("\n=== Abrigo atualizado com sucesso! ===");
 			System.out.println(shelter);
@@ -53,12 +54,10 @@ public class ShelterServiceImpl implements ShelterService {
 	@Override
 	public void deleteShelter() {
 		try {
-			System.out.print("\nDigite o ID do abrigo a ser deletado: ");
-			Long id = sc.nextLong();
-			Shelter shelter = shelterDAO.find(id);
-			if (shelter == null) {
-				throw new EntityNotFoundException("Abrigo não encontrado.");
-			}
+			var id = parseLong(getInput("\nDigite o ID do abrigo a ser deletado: "));
+			Optional.ofNullable(shelterDAO.find(id))
+					.orElseThrow(() -> new EntityNotFoundException("Abrigo não encontrado."));
+
 			shelterDAO.remove(id);
 			System.out.println("\n=== Abrigo deletado com sucesso! ===");
 		} catch (EntityNotFoundException e) {
@@ -70,15 +69,15 @@ public class ShelterServiceImpl implements ShelterService {
 	}
 
 	@Override
-	public void getAllShelters() {
+	public void getAllShelters() { // pode ser uma impressao vazia, nao deve lançar exceção
 		try {
-			List<Shelter> shelters = shelterDAO.findAll();
+			var shelters = Optional.of(shelterDAO.findAll())
+					.filter(list -> !list.isEmpty())
+					.orElseThrow(() -> new EntityNotFoundException("Nenhum Abrigo Encontrado!"));
 			System.out.println("\n=== Lista de Abrigos ===");
-			if (shelters.isEmpty()) {
-				System.out.println("Nenhum abrigo cadastrado.");
-			} else {
-				shelters.forEach(System.out::println);
-			}
+			shelters.forEach(System.out::println);
+		} catch (EntityNotFoundException e) {
+			System.err.println(e.getMessage());
 		} catch (Exception e) {
 			System.err.println("Erro ao obter a lista de abrigos: " + e.getMessage());
 		}
@@ -87,17 +86,12 @@ public class ShelterServiceImpl implements ShelterService {
 	@Override
 	public void getShelterById() {
 		try {
-			System.out.print("\nDigite o ID do abrigo: ");
-			Long id = sc.nextLong();
-			sc.nextLine();
+			var id = Long.parseLong(getInput("\nDigite o ID do abrigo: "));
+			var shelter = Optional.of(shelterDAO.find(id))
+					.orElseThrow(() -> new EntityNotFoundException("Abrigo não encontrado."));
 
-			Shelter shelter = shelterDAO.find(id);
-			if (shelter != null) {
-				System.out.println("\n=== Detalhes do Abrigo ===");
-				System.out.println(shelter);
-			} else {
-				throw new EntityNotFoundException("Abrigo não encontrado.");
-			}
+			System.out.println("\n=== Detalhes do Abrigo ===");
+			System.out.println(shelter);
 		} catch (EntityNotFoundException e) {
 			System.err.println(e.getMessage());
 		} catch (Exception e) {
@@ -107,105 +101,36 @@ public class ShelterServiceImpl implements ShelterService {
 
 	public Shelter createShelter() {
 		System.out.println("\n=== Registro de Abrigo ===");
-		System.out.print("Nome do abrigo: ");
-		String name = sc.nextLine();
-		validateShelterName(name);
+		var name = getInput("Nome do abrigo: ");
+		var address = getInput("Endereço: ");
+		var responsible = getInput("Responsavel: ");
+		var mail = getInput("Email: ");
+		var phone = getInput("Telefone: ");
 
-		System.out.print("Endereço: ");
-		String address = sc.nextLine();
-		validateShelterAddress(address);
-
-		System.out.print("Responsavel: ");
-		String responsible = sc.nextLine();
-		validateShelterResponsible(responsible);
-
-		System.out.print("Email: ");
-		String mail = sc.nextLine();
-		validateShelterEmail(mail);
-
-		System.out.print("Telefone: ");
-		String phone = sc.nextLine();
-
-
-		Shelter shelter = new Shelter();
-		shelter.setName(name);
-		shelter.setAddress(address);
-		shelter.setResponsible(responsible);
-		shelter.setEmail(mail);
-		shelter.setPhoneNumber(phone);
-
+		var shelter = new Shelter(null, name, address, responsible, phone, mail, null);
+		validationService.validate(shelter);
 		return shelter;
-
 	}
 
 	public Shelter createShelterFromInput() {
-		System.out.print("\nDigite o ID do abrigo a ser atualizado: ");
-		Long id = sc.nextLong();
-		sc.nextLine();
-
-		Shelter shelter = shelterDAO.find(id);
-
-		if (shelter == null) {
-			System.err.println("Abrigo não encontrado.");
-			return null;
-		}
+		var id = Long.parseLong(getInput("\nDigite o ID do abrigo a ser atualizado: "));
+		Optional.ofNullable(shelterDAO.find(id))
+				.orElseThrow(() -> new EntityNotFoundException("Abrigo não encontrado."));
 
 		System.out.println("\n=== Atualizar Abrigo ===");
+		var name = getInput("Novo nome do abrigo: ");
+		var address = getInput("Novo endereço: ");
+		var responsible = getInput("Novo responsavel: ");
+		var mail = getInput("Novo email: ");
+		var phone = getInput("Novo telefone: ");
 
-		System.out.print("Novo nome: ");
-		String name = sc.nextLine();
-		validateShelterName(name);
-
-		System.out.print("Novo endereço: ");
-		String address = sc.nextLine();
-		validateShelterAddress(address);
-
-		System.out.print("Novo responsavel: ");
-		String responsible = sc.nextLine();
-		validateShelterResponsible(responsible);
-
-		System.out.print("Novo email: ");
-		String mail = sc.nextLine();
-		validateShelterEmail(mail);
-
-		System.out.print("Novo telefone: ");
-		String phone = sc.nextLine();
-
-		shelter.setName(name);
-		shelter.setAddress(address);
-		shelter.setResponsible(responsible);
-		shelter.setEmail(mail);
-		shelter.setPhoneNumber(phone);
-
+		var shelter = new Shelter(id, name, address, responsible, phone, mail, null);
+		validationService.validate(shelter);
 		return shelter;
-
 	}
 
-	private void validateShelterName(String name) {
-		if (name.isBlank() || name.length() > 100) {
-			throw new IllegalArgumentException(
-					name + " - Nome inválido. O nome deve ter entre 1 e 100 caracteres e não deve ser Branco.");
-		}
+	private String getInput(String prompt) {
+		System.out.print(prompt);
+		return sc.nextLine();
 	}
-
-	private void validateShelterAddress(String address) {
-		if (address.isBlank() || address.length() > 200) {
-			throw new IllegalArgumentException(address
-					+ " - Endereço inválido. O endereço deve ter entre 1 e 200 caracteres e não deve ser Branco.");
-		}
-	}
-
-	private void validateShelterResponsible(String responsible) {
-		if (responsible.isBlank() || responsible.length() > 100) {
-			throw new IllegalArgumentException(responsible
-					+ " - Nome do responsável inválido. O nome deve ter entre 1 e 100 caracteres e não deve ser Branco.");
-		}
-	}
-
-	private void validateShelterEmail(String mail) {
-		if (!mail.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-			throw new IllegalArgumentException(mail + " - Email inválido.");
-		}
-	}
-
 }
